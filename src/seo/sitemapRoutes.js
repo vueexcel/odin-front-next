@@ -134,6 +134,7 @@ export function buildDynamicSitemapPaths(tickers) {
     const enc = encodeURIComponent(sym.toLowerCase());
     paths.push(`/ticker/${enc}`);
     paths.push(`/historical-data/${enc}`);
+    paths.push(`/ticker-report/${enc}`);
     paths.push(`/relative-performance/ticker/${enc}`);
     for (const kind of SITEMAP_STAT_KINDS) {
       paths.push(`/statistic/${kind}/${enc}`);

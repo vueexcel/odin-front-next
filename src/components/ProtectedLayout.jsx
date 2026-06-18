@@ -12,12 +12,10 @@ import { AppRightRail } from './AppRightRail.jsx';
 import { WatchlistRailFlyout } from './WatchlistRailFlyout.jsx';
 import { NewsRailFlyout } from './NewsRailFlyout.jsx';
 import { MarketMoversRailFlyout } from './MarketMoversRailFlyout.jsx';
-import { useSitewideSeo } from '../seo/usePageSeo.js';
 import { notifyChartFullscreenLayout } from '../utils/chartFullscreenLayout.js';
 import { RouteNavigationGate } from './RouteNavigationGate.jsx';
 
 function ProtectedLayoutShell({ children }) {
-  useSitewideSeo();
   const location = useLocation();
   const { activePanel, isDockOpen, close: closeRightDock } = useRightRailDock();
   const [sidebarExpanded, setSidebarExpanded] = useState(true);

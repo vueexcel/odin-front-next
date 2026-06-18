@@ -1,6 +1,9 @@
 import HistoricalDataPage from '@/views/HistoricalDataPage.jsx';
 import { fetchHistoricalDataPreview } from '@/ssr/fetchHistoricalDataPreview.js';
 import { toNextMetadata, enrichHistoricalDataMetadata } from '@/seo/metadata';
+import { PageServerShell } from '@/seo/PageServerShell';
+
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = await params;
@@ -24,6 +27,18 @@ export async function generateMetadata({ params }: { params: Promise<{ symbol: s
   return base;
 }
 
-export default function Page() {
-  return <HistoricalDataPage />;
+export default async function Page({ params }: { params: Promise<{ symbol: string }> }) {
+  const { symbol } = await params;
+  let initialPreview = null;
+  try {
+    initialPreview = await fetchHistoricalDataPreview(symbol.toUpperCase());
+  } catch {
+    /* ignore */
+  }
+  const pathname = `/historical-data/${symbol}`;
+  return (
+    <PageServerShell pathname={pathname} seoData={initialPreview}>
+      <HistoricalDataPage initialPreview={initialPreview} />
+    </PageServerShell>
+  );
 }

@@ -1,7 +1,8 @@
-import { redirectIfAuthenticated } from '@/lib/authGuestRedirect';
+import { toNextMetadata } from '@/seo/metadata';
+
+export const metadata = toNextMetadata('/forgot-password');
 import ForgotPasswordPage from '@/views/ForgotPasswordPage.jsx';
 
-export default async function Page() {
-  await redirectIfAuthenticated();
+export default function Page() {
   return <ForgotPasswordPage />;
 }

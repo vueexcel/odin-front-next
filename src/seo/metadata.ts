@@ -79,13 +79,15 @@ export const ROUTE_METADATA: Record<
     title: 'Account Management | Odin500',
     description:
       'View and manage your Odin500 account details, billing preferences, and linked authentication settings in one secure place.',
-    canonical: `${SITE_ORIGIN}/accounts`
+    canonical: `${SITE_ORIGIN}/accounts`,
+    noindex: true
   },
   '/paper-trading': {
     title: 'Odin500 Paper Trading | Simulated Portfolio ',
     description:
       'Practice trading with paper portfolios, automated strategies, and performance analytics without risking real capital.',
-    canonical: `${SITE_ORIGIN}/paper-trading`
+    canonical: `${SITE_ORIGIN}/paper-trading`,
+    noindex: true
   },
   '/login': {
     title: 'Sign In | Odin500',
@@ -97,6 +99,30 @@ export const ROUTE_METADATA: Record<
     title: 'Create Account | Odin500',
     description: 'Create a free Odin500 account to explore U.S. equity signals, market heatmaps, and ticker analytics.',
     canonical: `${SITE_ORIGIN}/signup`,
+    noindex: true
+  },
+  '/signup/verify-email': {
+    title: 'Verify Email | Odin500',
+    description: 'Verify your email to continue creating your Odin500 account.',
+    canonical: `${SITE_ORIGIN}/signup/verify-email`,
+    noindex: true
+  },
+  '/signup/enter-code': {
+    title: 'Enter Verification Code | Odin500',
+    description: 'Enter the verification code sent to your email to continue signup.',
+    canonical: `${SITE_ORIGIN}/signup/enter-code`,
+    noindex: true
+  },
+  '/signup/username': {
+    title: 'Choose Display Name | Odin500',
+    description: 'Finish creating your Odin500 account by choosing a display name.',
+    canonical: `${SITE_ORIGIN}/signup/username`,
+    noindex: true
+  },
+  '/forgot-password': {
+    title: 'Reset Password | Odin500',
+    description: 'Reset your Odin500 account password.',
+    canonical: `${SITE_ORIGIN}/forgot-password`,
     noindex: true
   }
 };
@@ -164,7 +190,7 @@ export function resolveDynamicRouteMetadata(pathname: string) {
     return {
       title: `${symbol} Historical Data, OHLC Chart & Trading Signals | Odin500`,
       description: `${symbol} ticker historical data, OHLC price chart trends, returns, and trading signals for stock market research.`,
-      canonical: `${SITE_ORIGIN}/ticker/${encodeURIComponent(symbol)}`
+      canonical: `${SITE_ORIGIN}/ticker/${encodeURIComponent(symbol.toLowerCase())}`
     };
   }
 
@@ -198,7 +224,17 @@ export function resolveDynamicRouteMetadata(pathname: string) {
     return {
       title: `${symbol} ${horizon} Return Statistics & Historical Data | Odin500`,
       description: `${symbol} ${horizon.toLowerCase()} return statistics, historical performance tables, and OHLC-based analytics for U.S. equity research.`,
-      canonical: `${SITE_ORIGIN}/statistic/${kind}/${encodeURIComponent(symbol)}`
+      canonical: `${SITE_ORIGIN}/statistic/${kind}/${encodeURIComponent(symbol.toLowerCase())}`
+    };
+  }
+
+  const relMatch = path.match(/^\/relative-performance\/ticker\/([A-Za-z0-9.]+)$/i);
+  if (relMatch) {
+    const symbol = decodeURIComponent(relMatch[1]).toUpperCase();
+    return {
+      title: `${symbol} Relative Performance vs Index | Odin500`,
+      description: `Compare ${symbol} performance versus indices and sectors with excess return charts and relative strength tables.`,
+      canonical: `${SITE_ORIGIN}/relative-performance/ticker/${encodeURIComponent(symbol.toLowerCase())}`
     };
   }
 

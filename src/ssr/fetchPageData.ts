@@ -74,6 +74,7 @@ export type TickerPageInitialData = {
   returnsSym: Record<string, unknown> | null;
   returnsSpy: Record<string, unknown> | null;
   asOfDate: string;
+  ohlcRows?: unknown[];
 };
 
 export type OdinSignalsInitialData = {
@@ -203,6 +204,45 @@ function tickerCoreBody(symbol: string) {
     ticker: symbol,
     customStartDate: RETURNS_DEFAULT_START,
     customEndDate: end
+  };
+}
+
+function mergeTickerReturnsPayload(
+  prev: Record<string, unknown> | null,
+  patch: Record<string, unknown> | null
+): Record<string, unknown> | null {
+  if (!patch || patch.success === false) return prev;
+  if (!prev) return patch;
+  const pPrev = (prev.performance as Record<string, unknown>) || {};
+  const pNext = (patch.performance as Record<string, unknown>) || {};
+  const pick = (key: string) => {
+    const nextVal = pNext[key];
+    const prevVal = pPrev[key];
+    if (nextVal === undefined) return prevVal;
+    if (
+      Array.isArray(nextVal) &&
+      nextVal.length === 0 &&
+      Array.isArray(prevVal) &&
+      prevVal.length > 0
+    ) {
+      return prevVal;
+    }
+    return nextVal;
+  };
+  return {
+    ...prev,
+    ...patch,
+    ticker: patch.ticker ?? prev.ticker,
+    asOfDate: patch.asOfDate ?? prev.asOfDate,
+    success: true,
+    performance: {
+      dynamicPeriods: pick('dynamicPeriods') ?? [],
+      predefinedPeriods: pick('predefinedPeriods') ?? [],
+      annualReturns: pick('annualReturns') ?? [],
+      quarterlyReturns: pick('quarterlyReturns') ?? [],
+      monthlyReturns: pick('monthlyReturns') ?? [],
+      customRange: pick('customRange') ?? []
+    }
   };
 }
 
@@ -378,35 +418,37 @@ export async function fetchIndexPageData(
 }
 
 export async function fetchTickerPageData(symbol: string): Promise<TickerPageInitialData | null> {
-  const sym = String(symbol || 'AAPL')
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9.-]/g, '')
-    .slice(0, 20);
-  if (!sym) return null;
+  const sym = sanitizeSymbol(symbol);
+  const body = tickerCoreBody(sym);
+  const end = body.customEndDate;
+  const oneYearStart = new Date(`${end}T12:00:00`);
+  oneYearStart.setFullYear(oneYearStart.getFullYear() - 1);
+  const ohlcStart = oneYearStart.toISOString().slice(0, 10);
 
-  const returnsDefaultEnd = new Date().toISOString().slice(0, 10);
-  const body = {
-    ticker: sym,
-    customStartDate: '2000-01-01',
-    customEndDate: returnsDefaultEnd
-  };
-
-  const [coreRes, spyRes] = await Promise.all([
+  const [coreRes, spyRes, annualRes, quarterlyRes, monthlyRes, ohlcRes] = await Promise.all([
     postMarketJson('/api/market/ticker-core-returns', body),
-    postMarketJson('/api/market/ticker-core-returns', {
-      ...body,
-      ticker: 'SPY'
-    })
+    postMarketJson('/api/market/ticker-core-returns', { ...body, ticker: BENCHMARK }),
+    postMarketJson('/api/market/ticker-annual-returns', body),
+    postMarketJson('/api/market/ticker-quarterly-returns', body),
+    postMarketJson('/api/market/ticker-monthly-returns', body),
+    getMarketJson(
+      `/api/market/ohlc?symbol=${encodeURIComponent(sym)}&start_date=${encodeURIComponent(ohlcStart)}&end_date=${encodeURIComponent(end)}&limit=400`
+    )
   ]);
 
   if (!coreRes && !spyRes) return null;
 
+  let returnsSym: Record<string, unknown> | null = coreRes;
+  for (const patch of [annualRes, quarterlyRes, monthlyRes]) {
+    returnsSym = mergeTickerReturnsPayload(returnsSym, patch);
+  }
+
   return {
     symbol: sym,
-    returnsSym: coreRes,
+    returnsSym,
     returnsSpy: spyRes,
-    asOfDate: String(coreRes?.asOfDate || returnsDefaultEnd).slice(0, 10)
+    asOfDate: String(returnsSym?.asOfDate || coreRes?.asOfDate || end).slice(0, 10),
+    ohlcRows: ohlcRowsFromPayload(ohlcRes)
   };
 }
 

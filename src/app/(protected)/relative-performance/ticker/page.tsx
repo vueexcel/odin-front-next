@@ -1,5 +1,5 @@
-import RelativeStrengthTickerPage from '@/views/RelativeStrengthTickerPage.jsx';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <RelativeStrengthTickerPage />;
+  redirect('/relative-performance/ticker/aapl');
 }

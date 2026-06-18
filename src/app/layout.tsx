@@ -3,8 +3,9 @@ import { Suspense } from 'react';
 import { Providers } from './providers';
 import './globals.css';
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE } from '@/seo/siteConfig.js';
+import { JsonLdSitewide } from '@/seo/JsonLd';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: DEFAULT_SITE_TITLE,
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.png" />
       </head>
       <body suppressHydrationWarning>
+        <JsonLdSitewide />
         <Suspense fallback={null}>
           <Providers>{children}</Providers>
         </Suspense>
