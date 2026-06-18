@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PageJsonLd } from './JsonLd';
+import { SeoCrawlerSummary } from './SeoCrawlerSummary';
 import { SeoServerContent } from './SeoServerContent';
 import type { BreadcrumbItem } from './buildPageJsonLd';
 
@@ -11,8 +12,8 @@ type PageServerShellProps = {
 };
 
 /**
- * Server wrapper: JSON-LD + noscript crawler HTML, then the interactive client view.
- * Users only see `children`; metadata is in `<head>` via generateMetadata.
+ * Server wrapper: JSON-LD, sr-only crawler summary, noscript tables, then the client view.
+ * All SEO metadata lives in `<head>` via generateMetadata (single source of truth).
  */
 export function PageServerShell({
   pathname,
@@ -22,7 +23,8 @@ export function PageServerShell({
 }: PageServerShellProps) {
   return (
     <>
-      <PageJsonLd pathname={pathname} breadcrumbItems={breadcrumbItems} />
+      <PageJsonLd pathname={pathname} breadcrumbItems={breadcrumbItems} seoData={seoData} />
+      <SeoCrawlerSummary pathname={pathname} data={seoData} />
       <SeoServerContent pathname={pathname} data={seoData} />
       {children}
     </>

@@ -10,3 +10,6 @@ export const DEFAULT_SITE_TITLE =
 
 export const DEFAULT_SITE_DESCRIPTION =
   'Find OHLC data, ticker historical data, market heatmaps, and trading signals for U.S. stocks and ETFs with Odin500.';
+
+/** Default Open Graph / Twitter share image (absolute URL). */
+export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-default.png`;

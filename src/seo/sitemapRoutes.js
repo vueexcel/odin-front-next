@@ -2,7 +2,6 @@ import { SITE_ORIGIN } from './siteConfig.js';
 
 /** Core marketing / app routes included in sitemap.xml */
 export const SITEMAP_STATIC_PATHS = [
-  '/',
   '/market',
   '/odin-signals',
   '/news',
@@ -11,7 +10,6 @@ export const SITEMAP_STATIC_PATHS = [
   '/stock-splits',
   '/statistic-data',
   '/return-table',
-  '/about',
   '/premium'
 ];
 

@@ -4,7 +4,9 @@ import {
   DEFAULT_SITE_TITLE,
   SITE_ORIGIN
 } from '@/seo/siteConfig.js';
+import { defaultOgImages } from '@/seo/ogImages';
 import { absoluteSiteUrl } from '@/seo/sitemapRoutes.js';
+import { formatReturnPct, pickDynamicReturn } from '@/seo/performanceSnippet';
 
 export const ROUTE_METADATA: Record<
   string,
@@ -13,52 +15,52 @@ export const ROUTE_METADATA: Record<
   '/': {
     title: DEFAULT_SITE_TITLE,
     description: DEFAULT_SITE_DESCRIPTION,
-    canonical: `${SITE_ORIGIN}/`
+    canonical: `${SITE_ORIGIN}/market`
   },
   '/market': {
-    title: 'Odin500 - Stock Market Dashboard, Heatmap & Trading Signals ',
+    title: 'Odin500 | Stock Market Dashboard, Heatmap & Trading Signals',
     description:
       'Live U.S. stock market dashboard with sector heatmap, index snapshots, OHLC analytics, and trading signals for active traders.',
     canonical: `${SITE_ORIGIN}/market`
   },
   '/odin-signals': {
-    title: 'Odin500 | Stock Signal Screener Treemap | Trading Signals ',
+    title: 'Odin500 | Stock Signal Screener Treemap | Trading Signals',
     description:
       'Explore stock trading signals with an interactive treemap and filters to find bullish and bearish setups across U.S. equities.',
     canonical: `${SITE_ORIGIN}/odin-signals`
   },
   '/news': {
-    title: 'Odin500 | Stock Market News by Ticker  ',
+    title: 'Odin500 | Stock Market News by Ticker',
     description:
       'Read market news and ticker-specific headlines for U.S. stocks and ETFs with quick symbol-level context for traders.',
     canonical: `${SITE_ORIGIN}/news`
   },
   '/heatmap': {
-    title: 'Odin500 | Stock Heatmap | Sector & Industry Performance ',
+    title: 'Odin500 | Stock Heatmap | Sector & Industry Performance',
     description:
       'Interactive stock heatmap of U.S. equities by sector and industry with price change, market cap weighting, and drill-down ticker lists.',
     canonical: `${SITE_ORIGIN}/heatmap`
   },
   '/market-movers': {
-    title: 'Odin500 | Top Gainers and Losers Today | Market Movers ',
+    title: 'Odin500 | Top Gainers and Losers Today | Market Movers',
     description:
       'Track top gaining and losing stocks today with sortable market-movers tables and performance charts for U.S. equities.',
     canonical: `${SITE_ORIGIN}/market-movers`
   },
   '/statistic-data': {
-    title: 'Odin500 | Stock Statistics Tables | Returns & OHLC Analytics ',
+    title: 'Odin500 | Stock Statistics Tables | Returns & OHLC Analytics',
     description:
       'Download stock statistics and returns across daily, weekly, monthly, quarterly, and annual horizons with OHLC-based analytics.',
     canonical: `${SITE_ORIGIN}/statistic-data`
   },
   '/return-table': {
-    title: 'Odin500 | Market Returns Table | Index & Sector Performance ',
+    title: 'Odin500 | Market Returns Table | Index & Sector Performance',
     description:
       'Compare index and sector returns across multiple time horizons with sortable performance tables for U.S. equities.',
     canonical: `${SITE_ORIGIN}/return-table`
   },
   '/stock-splits': {
-    title: 'Odin500 | Stock Split Calendar & History ',
+    title: 'Odin500 | Stock Split Calendar & History',
     description:
       'Browse upcoming and historical stock splits for U.S. equities with split ratios, dates, and ticker context.',
     canonical: `${SITE_ORIGIN}/stock-splits`
@@ -67,7 +69,8 @@ export const ROUTE_METADATA: Record<
     title: 'Your Odin500 Profile & Account Settings',
     description:
       'Manage your Odin500 account profile, subscription plan, email preferences, and security settings from your personal dashboard.',
-    canonical: `${SITE_ORIGIN}/about`
+    canonical: `${SITE_ORIGIN}/about`,
+    noindex: true
   },
   '/premium': {
     title: 'Odin500 Premium Plans | Odin500',
@@ -83,7 +86,7 @@ export const ROUTE_METADATA: Record<
     noindex: true
   },
   '/paper-trading': {
-    title: 'Odin500 Paper Trading | Simulated Portfolio ',
+    title: 'Odin500 Paper Trading | Simulated Portfolio',
     description:
       'Practice trading with paper portfolios, automated strategies, and performance analytics without risking real capital.',
     canonical: `${SITE_ORIGIN}/paper-trading`,
@@ -255,6 +258,7 @@ export function resolveRequestMetadata(pathname: string) {
 
 export function toNextMetadata(pathname: string): Metadata {
   const meta = resolveRequestMetadata(pathname);
+  const images = defaultOgImages();
   return {
     title: meta.title,
     description: meta.description,
@@ -265,12 +269,73 @@ export function toNextMetadata(pathname: string): Metadata {
       description: meta.description,
       url: meta.canonical,
       type: 'website',
-      siteName: 'Odin500'
+      siteName: 'Odin500',
+      images
     },
     twitter: {
       card: 'summary_large_image',
       title: meta.title,
-      description: meta.description
+      description: meta.description,
+      images: images.map((img) => img.url)
+    }
+  };
+}
+
+function pickReturnPct(performance: Record<string, unknown> | undefined, periodName: string) {
+  return pickDynamicReturn(performance, periodName);
+}
+
+/** Enrich ticker page title/description with live return snippets from SSR data. */
+export function enrichTickerMetadata(
+  meta: { title: string; description: string; canonical: string },
+  seoData: {
+    symbol?: string;
+    asOfDate?: string;
+    returnsSym?: { performance?: Record<string, unknown> } | null;
+  } | null
+) {
+  if (!seoData?.symbol) return meta;
+  const sym = String(seoData.symbol).toUpperCase();
+  const perf = seoData.returnsSym?.performance;
+  const ytd = pickReturnPct(perf, 'Year to Date (YTD)');
+  const y1 = pickReturnPct(perf, 'Last 1 year');
+  const bits: string[] = [];
+  if (ytd != null) bits.push(`YTD ${formatReturnPct(ytd)}`);
+  if (y1 != null) bits.push(`1Y ${formatReturnPct(y1)}`);
+  const asOf = seoData.asOfDate ? ` Data as of ${seoData.asOfDate}.` : '';
+  const perfBit = bits.length ? ` ${bits.join(', ')}.` : '';
+  return {
+    ...meta,
+    title: `${sym} Historical Data, OHLC Chart & Trading Signals | Odin500`,
+    description: `${sym} OHLC charts, period returns, Odin trading signals, and benchmark comparison.${perfBit}${asOf}`
+  };
+}
+
+export function metadataFromResolved(meta: {
+  title: string;
+  description: string;
+  canonical?: string;
+  noindex?: boolean;
+}): Metadata {
+  const images = defaultOgImages();
+  return {
+    title: meta.title,
+    description: meta.description,
+    alternates: { canonical: meta.canonical },
+    robots: meta.noindex ? { index: false, follow: false } : undefined,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: meta.canonical,
+      type: 'website',
+      siteName: 'Odin500',
+      images
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: meta.title,
+      description: meta.description,
+      images: images.map((img) => img.url)
     }
   };
 }

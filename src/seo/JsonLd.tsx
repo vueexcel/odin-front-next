@@ -22,10 +22,12 @@ export function JsonLdSitewide() {
 
 export function PageJsonLd({
   pathname,
-  breadcrumbItems = []
+  breadcrumbItems = [],
+  seoData = null
 }: {
   pathname: string;
   breadcrumbItems?: BreadcrumbItem[];
+  seoData?: unknown;
 }) {
-  return <JsonLd data={buildPageJsonLd(pathname, breadcrumbItems)} />;
+  return <JsonLd data={buildPageJsonLd(pathname, breadcrumbItems, seoData)} />;
 }
